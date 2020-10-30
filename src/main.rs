@@ -4,5 +4,9 @@ use parser::from_file;
 
 fn main() {
     let fp = "/home/ank3r/Documents/ml/p37/parser/src/test.py";
-    from_file(fp);
+    if let Ok(tok) = from_file(fp){
+        let sink = tok.sink();
+
+        println!("Sink shape {:#?}", sink);
+    }
 }

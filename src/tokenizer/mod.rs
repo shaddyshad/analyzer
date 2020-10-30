@@ -1,18 +1,20 @@
 pub mod states;
-#[macro_use]
-pub mod small_charset;
 pub mod input_buffer;
-mod definitions;
 pub mod sink;
 pub mod tokens;
 pub mod token_set;
+pub mod reserved;
+pub mod stack;
+
+pub use stack::Stack;
+
+pub use reserved::Reserved;
 
 pub use token_set::TokenSet;
 
 pub use tokens::Tokens;
 pub use sink::TokenSink;
 use states::States;
-pub use small_charset::SmallCharSet;
 pub use input_buffer::{InputBuffer, SetResult};
 
 use SetResult::{FromSet, NotFromSet};
@@ -38,6 +40,10 @@ impl Tokenizer {
             buffer: InputBuffer::new(),
             sink: TokenSink::new()
         }
+    }
+
+    pub fn sink(&self) -> &TokenSink {
+        &self.sink
     }
 
     pub fn get_char(&mut self) -> Option<char>{
@@ -124,14 +130,13 @@ macro_rules! pop_from_set(
 
 impl Tokenizer {
     pub fn step(&mut self) -> bool {
-        println!("Processing in state {:?} ", self.state);
 
         match self.state {
             States::Document => loop{
-                let set = TokenSet::new(vec![' ', '\n', '\t', '\'', '"', '{', '}', '(', ')', ':', '.', ',', '*', '#', '=']);
+                let set = TokenSet::new(vec![' ', '\n', '\t', '\'', '"', '{', '}', '(', ')', ':', '.', ',', '*', '#', '=', '[', ']']);
 
                 match pop_from_set!(self, set){
-                    FromSet(' ') => (),
+                    FromSet(' ') => self.emit(Tokens::Space),
                     FromSet('\n') => self.emit(Tokens::NewLine),
                     FromSet('\t') => self.emit(Tokens::Tab),
                     FromSet('(') => self.emit(Tokens::OpeningPar),
@@ -146,17 +151,15 @@ impl Tokenizer {
                     FromSet('=') => self.emit(Tokens::Equals),
                     FromSet('\'') => self.emit(Tokens::StringSingle),
                     FromSet('"') => self.emit(Tokens::StringDouble),
+                    FromSet('[') => self.emit(Tokens::OpeningSquare),
+                    FromSet(']') => self.emit(Tokens::ClosingSquare),
                     FromSet(_) => (),
                     NotFromSet(c) => self.emit(Tokens::Token(c))
  
                 }
             },
            
-            _ => {
-                println!("Some shit!");
-
-                false
-            }
+            _ => false
         }
     }
 }

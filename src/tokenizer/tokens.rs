@@ -11,7 +11,7 @@ pub enum Tokens {
     StringDouble,       // "
     Colon,              // :
     OpeningBrace,       // {
-    ClosingBrace,       // ]
+    ClosingBrace,       // }
     Comma,              // ,
     Dot,                // . 
     AngleRight,         // > 
@@ -19,4 +19,7 @@ pub enum Tokens {
     Comment,            // # 
     Equals,             // =
     Star,               // *
+    OpeningSquare,      // [
+    ClosingSquare,      // ]
+    Space,              // ' '
 }
