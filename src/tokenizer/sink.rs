@@ -1,4 +1,4 @@
-use super::{Tokens, Reserved};
+use super::{Tokens, Reserved, Stack};
 use tendril::StrTendril;
 
 
@@ -9,7 +9,11 @@ pub struct TokenSink {
     docstring_mode: bool, 
     docstring: StrTendril,
     subsequent_spaces: u32,
-    depth: u32,             // track the hierachy depth 
+    depth: u32,             // track the hierachy depth
+    docstring_stack: Stack<StrTendril>,
+    depth_stack: Stack<u32> ,
+    line_number: u32,
+
 }
 
 impl TokenSink {
@@ -19,22 +23,28 @@ impl TokenSink {
             docstring_mode: false,
             docstring: StrTendril:: new(),
             subsequent_spaces: 0,
-            depth: 0
+            depth: 0,
+            docstring_stack: Stack::new(),
+            depth_stack: Stack::new(),
+            line_number: 0,
         }
     }
 
     // process a token 
-    pub fn process(&mut self, token: Tokens){
-        self.pre_process(&token);
+    pub fn process(&mut self, token: Tokens, line_no: u32){
+        self.pre_process(&token, line_no);
 
         match token {
-            Tokens::Token(tok) => {
+            Tokens::Token(tok) => {   
+            
                 // check if it is a docstring 
                 if self.docstring_mode {
                     // append tok to docstring 
                     // add a space 
                     self.docstring.push_slice(&tok);
                     self.docstring.push_slice(" ");
+
+                    
                 }else{
                     // process a single token, a token could contain a reserved keyword or a definition
                     match Reserved::from_tendril(&tok){
@@ -47,6 +57,7 @@ impl TokenSink {
                         _ => ()
                     }
                 }
+
                 
             },
             Tokens::StringDouble | Tokens::StringSingle => {
@@ -69,47 +80,58 @@ impl TokenSink {
                     self.subsequent_quotes = count;
                 }
             },
-            Tokens::Space => {
-                // check for depth change 
-                let c = self.subsequent_spaces / 4;
-
-
-                if c >= 1{
-                    // increase the level 
-                    self.commit_depth(c);
-                }
-            }
             _ => ()
         }
+
     }
 
     fn commit_docstring(&mut self){
-        // commit a docstring 
+        // commit a docstring
+        self.docstring_stack.push(self.docstring.clone()); 
         self.docstring.clear()
     }
 
-    fn commit_depth(&mut self, depth: u32){
-        // commit a depth 
-        self.depth = depth;
-        
-    }
 
-    fn pre_process(&mut self, token: &Tokens){
+
+    fn pre_process(&mut self, token: &Tokens, line_no: u32){
         // pre process for cases of docstring and subsequent counts\
         match token {
             Tokens::StringSingle | Tokens::StringDouble => {
                 self.subsequent_quotes += 1;        // increase number of subsequent quotes 
-                self.subsequent_spaces = 0;         // reset subsequent spaces
-                
+                self.subsequent_spaces= 0;
             },
             Tokens::Space => {
-                self.subsequent_quotes = 0;
-                self.subsequent_spaces += 1;
+                let spaces = self.subsequent_spaces +1;
+
+                // if four subsequent spaces add 1 to depth 
+                if spaces == 4 {
+                    self.depth += 1;
+                    self.subsequent_spaces = 0;
+                }else{
+                    self.subsequent_spaces = spaces;
+                }
             },
             _ => {
                 self.subsequent_quotes = 0;
-                self.subsequent_spaces = 0;
+                self.subsequent_spaces= 0;
             }
+        }
+
+        // adjust new lines 
+        self.adjust_depth_on_newline(line_no);
+
+    }
+
+    /// each new line should reset the line number 
+    fn adjust_depth_on_newline(&mut self, line_no: u32){
+        if line_no != self.line_number{
+            // commit the depth 
+            self.depth_stack.push(self.depth);
+
+            // changing line number 
+            self.depth = 0;
+            self.subsequent_spaces = 0;
+            self.line_number = line_no;
         }
     }
 

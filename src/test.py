@@ -8,4 +8,4 @@ class ClassToken:
         self.contructor = None 
         self.num_of_methods = 0 
         self.docstring = ""
-        
+a = ClassToken()

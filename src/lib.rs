@@ -25,7 +25,9 @@ pub fn from_file(fp: &str) -> Result<Tokenizer, &'static str>{
         // feed to tokenizer 
         for line in lines {
             if let Ok(l) = line {
-                let buf = StrTendril::from(l);
+                let mut buf = StrTendril::from(l);
+                
+                buf.push_char('\n');
 
                 // feed to tokenizer  
                 let _ = tok.feed(buf);

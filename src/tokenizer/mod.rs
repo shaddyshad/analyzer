@@ -99,7 +99,7 @@ impl Tokenizer {
     }
 
     fn emit(&mut self, token: Tokens){
-        self.sink.process(token);
+        self.sink.process(token, self.line_number);
     }
 
 }
