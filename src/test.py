@@ -1,4 +1,4 @@
-class ClassToken:
+class ClassToken(Super):
     """ Token representing a class """
     def __init__(self):
         """ Initialize class attributes """
@@ -9,3 +9,4 @@ class ClassToken:
         self.num_of_methods = 0 
         self.docstring = ""
 a = ClassToken()
+b = "shad"

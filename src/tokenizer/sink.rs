@@ -13,7 +13,7 @@ pub struct TokenSink{
     docstring_stack: Stack<StrTendril>,
     depth_stack: Stack<u32> ,
     line_number: u32,
-    current_class: Vec<Box<dyn PyEntity>>
+    current_processor: Vec<Box<dyn PyEntity>>
 
 }
 
@@ -28,7 +28,7 @@ impl TokenSink{
             docstring_stack: Stack::new(),
             depth_stack: Stack::new(),
             line_number: 0,
-            current_class: vec![]
+            current_processor: vec![]
         }
     }
 
@@ -54,8 +54,8 @@ impl TokenSink{
                         self.create_class();
                     }else{
                         // check if we have any processing class 
-                        if let Some(ref mut cls) = self.current_class.last_mut() {
-                            cls.process(res);
+                        if let Some(cls) = self.current_processor.last_mut() {
+                            cls.process(res, line_no, self.depth_stack.last());
                         }
                     }
                     
@@ -83,7 +83,12 @@ impl TokenSink{
                     self.subsequent_quotes = count;
                 }
             },
-            _ => ()
+            _ => {
+                // if any class processor, 
+                if let Some(cls) = self.current_processor.last_mut(){
+                    cls.process_token(token, line_no, self.depth_stack.last());
+                }
+            }
         }
 
     }
@@ -142,7 +147,7 @@ impl TokenSink{
     fn create_class(&mut self){
         let class = Class::new(self.line_number, self.depth);
 
-        self.current_class.push(Box::new(class));
+        self.current_processor.push(Box::new(class));
     }
 
 }

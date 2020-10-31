@@ -19,4 +19,8 @@ impl <T> Stack<T> {
     pub fn pop(&mut self) -> Option<T>{
         self.items.pop_front()
     }
+
+    pub fn last(&self) -> Option<&T>{
+        self.items.back()
+    }
 }
