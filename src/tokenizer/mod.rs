@@ -5,7 +5,8 @@ pub mod tokens;
 pub mod token_set;
 pub mod reserved;
 pub mod stack;
-
+pub mod interface;
+pub use interface::{Class, PyEntity};
 pub use stack::Stack;
 
 pub use reserved::Reserved;
@@ -21,7 +22,7 @@ use SetResult::{FromSet, NotFromSet};
 
 use tendril::StrTendril;
 
-pub struct Tokenizer {
+pub struct Tokenizer{
     state: States,
     current_char: char,
     reconsume: bool,

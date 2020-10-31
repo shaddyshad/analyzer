@@ -1,10 +1,10 @@
-use super::{Tokens, Reserved, Stack};
+use super::{Tokens, Reserved, Stack, Class, PyEntity};
 use tendril::StrTendril;
 
 
 /// Token sink 
 #[derive(Debug)]
-pub struct TokenSink {
+pub struct TokenSink{
     subsequent_quotes: u32,
     docstring_mode: bool, 
     docstring: StrTendril,
@@ -13,10 +13,11 @@ pub struct TokenSink {
     docstring_stack: Stack<StrTendril>,
     depth_stack: Stack<u32> ,
     line_number: u32,
+    current_class: Vec<Box<dyn PyEntity>>
 
 }
 
-impl TokenSink {
+impl TokenSink{
     pub fn new() -> Self {
         Self {
             subsequent_quotes: 0,
@@ -27,6 +28,7 @@ impl TokenSink {
             docstring_stack: Stack::new(),
             depth_stack: Stack::new(),
             line_number: 0,
+            current_class: vec![]
         }
     }
 
@@ -47,15 +49,16 @@ impl TokenSink {
                     
                 }else{
                     // process a single token, a token could contain a reserved keyword or a definition
-                    match Reserved::from_tendril(&tok){
-                        Reserved::Label(c) => (),
-                        Reserved::Class => {
-                            // finalize any pending processing 
-                            // and create a new class processor
-                            
-                        },
-                        _ => ()
+                    let res = Reserved::from_tendril(&tok);
+                    if let Reserved::Class = res{
+                        self.create_class();
+                    }else{
+                        // check if we have any processing class 
+                        if let Some(ref mut cls) = self.current_class.last_mut() {
+                            cls.process(res);
+                        }
                     }
+                    
                 }
 
                 
@@ -133,6 +136,13 @@ impl TokenSink {
             self.subsequent_spaces = 0;
             self.line_number = line_no;
         }
+    }
+
+    // create a new class 
+    fn create_class(&mut self){
+        let class = Class::new(self.line_number, self.depth);
+
+        self.current_class.push(Box::new(class));
     }
 
 }
