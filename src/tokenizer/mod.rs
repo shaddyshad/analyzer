@@ -8,9 +8,9 @@ pub mod stack;
 pub mod interface;
 pub use interface::{Class, PyEntity};
 pub use stack::Stack;
-
+pub mod line;
 pub use reserved::Reserved;
-
+pub use line::Line;
 pub use token_set::TokenSet;
 
 pub use tokens::Tokens;
@@ -28,7 +28,8 @@ pub struct Tokenizer{
     reconsume: bool,
     line_number: u32,
     buffer: InputBuffer,
-    sink: TokenSink
+    sink: TokenSink,
+    tokens: Vec<Tokens>,
 }
 
 impl Tokenizer {
@@ -39,7 +40,8 @@ impl Tokenizer {
             reconsume: false,
             line_number: 0,
             buffer: InputBuffer::new(),
-            sink: TokenSink::new()
+            sink: TokenSink::new(),
+            tokens: vec![]
         }
     }
 
@@ -94,13 +96,28 @@ impl Tokenizer {
     }
 
     fn run(&mut self){
-        while self.step(){
-            println!("Round");
-        }
+        while self.step(){}
     }
 
+    // commit a line 
+    fn commit_line(&mut self){
+        // get all tokens 
+        let line = Line {
+            tokens: self.tokens.clone(),
+            line_number: self.line_number
+        };
+
+        // commit this line 
+        self.sink.process(line);
+
+        // clear the vector 
+        self.tokens.clear();
+    }
+
+    // emit a token 
     fn emit(&mut self, token: Tokens){
-        self.sink.process(token, self.line_number);
+        // insert a token 
+        self.tokens.push(token);
     }
 
 }
@@ -138,7 +155,7 @@ impl Tokenizer {
 
                 match pop_from_set!(self, set){
                     FromSet(' ') => self.emit(Tokens::Space),
-                    FromSet('\n') => self.emit(Tokens::NewLine),
+                    FromSet('\n') => self.commit_line(),
                     FromSet('\t') => self.emit(Tokens::Tab),
                     FromSet('(') => self.emit(Tokens::OpeningPar),
                     FromSet(')') => self.emit(Tokens::ClosingPar),

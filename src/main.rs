@@ -7,6 +7,6 @@ fn main() {
     if let Ok(tok) = from_file(fp){
         let sink = tok.sink();
 
-        println!("Sink shape {:#?}", sink);
+        // println!("Sink shape {:#?}", sink);
     }
 }
