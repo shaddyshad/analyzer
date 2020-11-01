@@ -13,7 +13,7 @@ impl TokenSink{
 
     // process a token 
     pub fn process(&mut self, line: Line){
-        println!("{:#?}", line.depth());
+        println!("{:#?}", line.line_type());
     }
 
 }
