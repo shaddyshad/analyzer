@@ -10,7 +10,7 @@ pub use interface::{Class, PyEntity};
 pub use stack::Stack;
 pub mod line;
 pub use reserved::Reserved;
-pub use line::Line;
+pub use line::{Line, LineTypes};
 pub use token_set::TokenSet;
 
 pub use tokens::Tokens;

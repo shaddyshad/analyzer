@@ -2,99 +2,65 @@ use tendril::StrTendril;
 use super:: {Reserved, Tokens};
 
 // a trait for types that can be built from a python script 
-pub trait PyEntity: std::fmt::Debug {
-    fn process(&mut self, token: Reserved, line_no: u32, depth: Option<&u32>);
-    fn process_token(&mut self, token: Tokens, line_no: u32, depth: Option<&u32>);
-}
+pub trait PyEntity: std::fmt::Debug {}
+
 
 #[derive(Debug)]
 pub struct Class {
-    pub start_line: u32,
-    pub last_line: u32,
-    pub depth: u32,
-    pub name: StrTendril,
-    pub is_subclass: bool,
-    pub super_class: Option<StrTendril>,
-    processing_definition: bool,
-    commited: bool
+    name: StrTendril,
+    depth: u32,
+    line: u32,
+    is_subclass: bool,
+    super_class: Option<StrTendril>
 }
 
-impl PyEntity for Class {
-    fn process(&mut self, token: Reserved, line_no: u32, depth: Option<&u32>){
-        self.check_last_line(line_no, depth);
-
-        if line_no == self.start_line {
-            // class definition line 
-            match token {
-                Reserved::Label(c) => {
-                    // check if class has a class name yet 
-                    if self.name.len32() == 0 {
-                        self.name = c;
-                    }else{
-                        self.process_class_definition(c);
-                    }
-                },
-                _ => {
-    
-                }
-            }
-        }else{
-            self.processing_definition = false;
-        }
-        
-    }
-
-    fn process_token(&mut self, token: Tokens, line_no: u32, depth: Option<&u32>){
-        self.check_last_line(line_no, depth);
-        // process a token 
-        match token {
-            Tokens::OpeningPar => {
-                // if we are in the first line, it is a super class definition 
-                if line_no == self.start_line {
-                    self.is_subclass = true;
-                    self.processing_definition = true;
-                }else{
-                    self.processing_definition = false;
-                }
-            },
-            _ => {}
-        }
-    }
-}
+impl PyEntity for Class {}
 
 impl Class {
-    pub fn new(start: u32, depth: u32) -> Self {
+    pub fn new(depth: u32, line: u32) -> Self {
         Self {
-            start_line: start,
-            depth,
-            last_line: 0,
-            is_subclass: false,
-            super_class: None,
             name: StrTendril::new(),
-            processing_definition: false,
-            commited: false 
+            depth,
+            line,
+            is_subclass: false,
+            super_class: None 
         }
     }
 
-    fn process_class_definition(&mut self, def: StrTendril){
-        // if we are processing a sub class 
-        if self.processing_definition {
-            if self.is_subclass & self.super_class.is_none() {
-                self.super_class = Some(def);
+    fn set_name(&mut self, name: StrTendril){
+        self.name = name;
+    }
+
+    fn set_superclass(&mut self, super_class: StrTendril){
+        self.super_class = Some(super_class);
+        self.is_subclass = true;
+    }
+
+    pub fn set_subclass(&mut self, subclass: bool){
+        self.is_subclass = subclass;
+    }
+
+    pub fn has_name(&self) -> bool {
+        self.name.len32() != 0
+    }
+
+    // commit a superclass 
+    pub fn commit_superclass(&mut self){
+        println!("Super class defined");
+    }
+
+    // process a label 
+    pub fn process_label(&mut self, label: StrTendril){
+        // if the class has name, then it's probably a superclass name 
+        if self.has_name(){
+            // if is_sublass name is set and no superclass name, set super class 
+            if self.is_subclass && self.super_class.is_none(){
+                self.set_superclass(label);
             }
+        }else{
+            // we should set the class name 
+            self.set_name(label);
         }
     }
 
-    fn check_last_line(&mut self, line_no: u32, depth: Option<&u32>){
-        // if depth changes 
-        if let Some(d) = depth {
-            if d == &self.depth && !self.commited && line_no != self.start_line && !self.processing_definition{
-                
-
-                self.last_line = line_no;
-                self.commited = true;
-            }
-        }
-        
-    }
 }
