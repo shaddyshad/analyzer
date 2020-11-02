@@ -1,4 +1,4 @@
-use super::{Tokens, Stack, PyEntity, Line, LineTypes, Class};
+use super::{Tokens, Stack, PyEntity, Line, LineTypes, Class, Function};
 use tendril::StrTendril;
 
 
@@ -24,7 +24,7 @@ impl TokenSink{
         // process the tokens 
         match line_type {
             LineTypes::ClassDeclaration => {
-                self.process_class_declaration(line);
+                self.create_class(line);
             },
             LineTypes::DocString => {
                 // toggle the docstring processing mode
@@ -46,6 +46,10 @@ impl TokenSink{
                     
                 }
                 
+            },
+            LineTypes::FunctionCreation => {
+                // create a new function 
+                self.create_function(line);
             }
             _ => ()
         }
@@ -69,13 +73,67 @@ impl TokenSink{
         Some(text)
     }
 
-    // process a class declaration 
-    fn process_class_declaration(&mut self, line: Line){
+    // create a new function 
+    fn create_function(&mut self, line: Line){
+        // trim the first token 
+        let tokens = self.trim_first_token(&line);
+
+        // find the context of this 
+        let context = self.get_context();
+
+        // create a new function 
+        let mut function = Function::new(line.depth(), line.line_number, context);
+
+        // iterate the tokens filling in the function 
+        for token in tokens {
+            match token {
+                Tokens::Token(c) => {
+                    // process a label 
+                    function.process_text(c.clone())
+                },
+                Tokens::OpeningPar => function.toggle_args(),
+                Tokens::ClosingPar => function.toggle_args(),
+                _ => ()
+            }
+        }
+
+        // add to the builders 
+        self.builders.push(Box::new(function));
+    }
+
+    // get the function context 
+    fn get_context(&self) -> Option<u32>{
+        if let Some(ref builder) = self.builders.top(){
+            // check the type of builder
+            let b_type = builder.get_type();
+
+            if b_type.is_class(){
+                // clone the reference 
+                Some(builder.get_line())
+
+            }else{
+                None
+            }
+
+        }else{
+            None 
+        }
+    }
+
+    // trim and remove the first token from a line 
+    fn trim_first_token(&self, line: &Line) -> Vec<Tokens>{
         let tokens = line.trim();
 
+        let tokens = &tokens[1..];
+
+        tokens.to_vec()
+    }
+
+    // process a class declaration 
+    fn create_class(&mut self, line: Line){
         // remove the first token because it's 'class' and we already know we are building 
         // a new class 
-        let tokens = &tokens[1..];
+        let tokens = self.trim_first_token(&line);
         let mut class = Class::new(line.depth(), line.line_number);
 
         // process them in turn 
@@ -83,7 +141,7 @@ impl TokenSink{
             match token {
                 Tokens::Token(c) => {
                     // process a label 
-                    class.process_label(c.clone());
+                    class.process_text(c.clone());
                 },
                 Tokens::OpeningPar => {
                     // a '(' in clas declaration indicates a sub class definition 

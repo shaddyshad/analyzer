@@ -6,13 +6,15 @@ pub mod token_set;
 pub mod reserved;
 pub mod stack;
 pub mod interface;
-pub use interface::{Class, PyEntity};
+pub use interface::{PyEntity, EntityType};
 pub use stack::Stack;
 pub mod line;
 pub use reserved::Reserved;
 pub use line::{Line, LineTypes};
 pub use token_set::TokenSet;
+mod builders;
 
+use builders::{Class, Function};
 pub use tokens::Tokens;
 pub use sink::TokenSink;
 use states::States;

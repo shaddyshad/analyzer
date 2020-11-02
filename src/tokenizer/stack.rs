@@ -29,6 +29,11 @@ impl <T> Stack<T> {
         self.items.front_mut()
     }
 
+    // return the address of the top item 
+    pub fn top(&self) -> Option<&T>{
+        self.items.front()
+    }
+
     // check if stack is empty 
     pub fn is_empty(&self) -> bool {
         self.items.is_empty()
