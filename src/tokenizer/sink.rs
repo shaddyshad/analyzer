@@ -1,17 +1,19 @@
 use super::{Tokens, Stack, PyEntity, Line, LineTypes, Class};
-
+use tendril::StrTendril;
 
 
 /// Token sink 
 #[derive(Debug)]
 pub struct TokenSink{
-    builders: Stack<Box<dyn PyEntity>>
+    builders: Stack<Box<dyn PyEntity>>,
+    processing_docstring: bool
 }
 
 impl TokenSink{
     pub fn new() -> Self {
         Self { 
-            builders: Stack::new()
+            builders: Stack::new(),
+            processing_docstring: false
         }
     }
 
@@ -23,9 +25,48 @@ impl TokenSink{
         match line_type {
             LineTypes::ClassDeclaration => {
                 self.process_class_declaration(line);
+            },
+            LineTypes::DocString => {
+                // toggle the docstring processing mode
+                self.processing_docstring = !self.processing_docstring;
+            },
+            LineTypes::Text(_) => {
+                // collect the text from tokens 
+                let text = self.get_text(&line).expect("No text tokens in this line");
+
+                // if we are in docstring mode, set the docstring of the itemin the top 
+                if let Some(ref mut builder) = self.builders.top_mut(){
+                    // use the builder to add a docstring 
+                    if self.processing_docstring {
+                        builder.add_helptext(text);
+                    }else{
+                        // some other text 
+                        builder.process_text(text);
+                    }
+                    
+                }
+                
             }
             _ => ()
         }
+    }
+
+    // get some text from a line 
+    fn get_text(&self, line: &Line) -> Option<StrTendril>{
+        let tokens = line.trim();
+
+        // loop through finding text tokens 
+        let mut text = StrTendril::new();
+
+        for token in tokens {
+            if let Tokens::Token(c) = token {
+                // push the slice 
+                text.push_tendril(&c);
+                text.push_slice(" ");
+            }
+        }
+
+        Some(text)
     }
 
     // process a class declaration 
@@ -50,6 +91,7 @@ impl TokenSink{
                 },
                 Tokens::ClosingPar => {
                     // can be used to indicate completion of a superclass definition 
+                    // find the definition of the super cclass and store it 
                     class.commit_superclass();
                 },
                 _ => ()

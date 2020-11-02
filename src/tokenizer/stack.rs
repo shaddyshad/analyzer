@@ -23,4 +23,14 @@ impl <T> Stack<T> {
     pub fn last(&self) -> Option<&T>{
         self.items.back()
     }
+
+    // get the item on top mutably 
+    pub fn top_mut(&mut self) -> Option<&mut T>{
+        self.items.front_mut()
+    }
+
+    // check if stack is empty 
+    pub fn is_empty(&self) -> bool {
+        self.items.is_empty()
+    }
 }

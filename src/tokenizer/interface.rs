@@ -1,8 +1,15 @@
 use tendril::StrTendril;
-use super:: {Reserved, Tokens};
+// use super:: {Reserved, Tokens};
 
 // a trait for types that can be built from a python script 
-pub trait PyEntity: std::fmt::Debug {}
+pub trait PyEntity: std::fmt::Debug {
+    // to add a docstring 
+    fn add_helptext(&mut self, help_text: StrTendril);
+    // to add a comment 
+    fn add_comment(&mut self, comment: StrTendril);
+    // to process some text 
+    fn process_text(&mut self, text: StrTendril);
+}
 
 
 #[derive(Debug)]
@@ -11,10 +18,28 @@ pub struct Class {
     depth: u32,
     line: u32,
     is_subclass: bool,
-    super_class: Option<StrTendril>
+    super_class: Option<StrTendril>,
+    blocks: Vec<Box<dyn PyEntity>>,
+    help_text: Option<StrTendril>,
+    comment: Option<StrTendril>
 }
 
-impl PyEntity for Class {}
+impl PyEntity for Class {
+    // add a comment to an entity 
+    fn add_comment(&mut self, comment: StrTendril) {
+        self.comment = Some(comment);
+    }
+
+    // add help text (docstring)
+    fn add_helptext(&mut self, help_text: StrTendril){
+        self.help_text = Some(help_text);
+    }
+
+    // process some other text 
+    fn process_text(&mut self, text: StrTendril){
+        println!("Text on class {:?}", text);
+    }
+}
 
 impl Class {
     pub fn new(depth: u32, line: u32) -> Self {
@@ -23,7 +48,10 @@ impl Class {
             depth,
             line,
             is_subclass: false,
-            super_class: None 
+            super_class: None, 
+            blocks: vec![],
+            help_text: None,
+            comment: None 
         }
     }
 
@@ -44,7 +72,8 @@ impl Class {
         self.name.len32() != 0
     }
 
-    // commit a superclass 
+    /// commit a superclass 
+    /// find the definition of the super class 
     pub fn commit_superclass(&mut self){
         println!("Super class defined");
     }
