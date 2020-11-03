@@ -52,6 +52,11 @@ impl PyEntity for Class {
             self.set_name(text);
         }
     }
+
+    // add a block 
+    fn add_block(&mut self, block: Box<dyn PyEntity>){
+        self.blocks.push(block);
+    }
 }
 
 impl Class {

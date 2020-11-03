@@ -10,7 +10,9 @@ pub struct Function{
     depth: u32,
     context: Option<u32>,
     blocks: Vec<Box<dyn PyEntity>>,
-    processing_args: bool
+    processing_args: bool,
+    help_text: StrTendril,
+    comment: StrTendril
 }
 
 impl PyEntity for Function{
@@ -27,37 +29,51 @@ impl PyEntity for Function{
         self.line_no
     }
 
+    // add a docstring 
+    fn add_helptext(&mut self, help_text: StrTendril){
+        self.help_text = help_text;
+    }
+
+    fn add_comment(&mut self,comment: StrTendril){
+        self.comment = comment;
+    }
+
+    // add a block 
+    fn add_block(&mut self, block: Box<dyn PyEntity>){
+        self.blocks.push(block);
+    }
+
     // process a text label
     fn process_text(&mut self, text: StrTendril){
-        // check if name exists 
-        if self.name.len32() == 0 {
-            // add the name 
-            self.name = text;
+        let arg = Reserved::from_tendril(&text);
 
-        }else{
-            // check if we are processing arguments 
-            if self.processing_args {
-                // add this as an argument 
-                // check for 'self'
-                let arg = Reserved::from_tendril(&text);
-
-                match arg {
-                    Reserved::This => {
-                        // assert that there is a context available 
-                        assert!(
-                            self.context.is_some()
-                        ) 
-                    },
-                    Reserved::Label(c) => {
-                        // add an argument 
+        match arg {
+            Reserved::This => {
+                // assert that there is a context available 
+                assert!(
+                    self.context.is_some()
+                ) 
+            },
+            Reserved::Label(c) => {
+                // add an argument
+                if self.name.len32() == 0 {
+                    // add a function name 
+                    self.name = c;
+                } else {
+                    if self.processing_args{
                         self.num_of_args += 1;
                         self.args.push(c);
-                    },
-                    _ => ()
+                    }
                 }
                 
+            },
+            Reserved::Init => {
+                // constructor is the name 
+                self.name = StrTendril::from_slice("constructor");
             }
+            _ => ()
         }
+        
     }
 }
 
@@ -72,7 +88,9 @@ impl Function {
             depth,
             context,
             blocks: vec![],
-            processing_args: false
+            processing_args: false,
+            help_text: StrTendril::new(),
+            comment: StrTendril::new()
         }
 
     }

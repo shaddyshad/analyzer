@@ -9,7 +9,7 @@ class ClassToken(Super):
         self.name = ""
         self.parent = None 
         self.attributes = []
-        self.contructor = None 
+        self.constructor = None 
         self.num_of_methods = 0 
         self.docstring = ""
 

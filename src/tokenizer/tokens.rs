@@ -1,6 +1,6 @@
 use tendril::StrTendril;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Tokens {
     Token(StrTendril),
     Tab,                // \t

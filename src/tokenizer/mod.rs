@@ -14,7 +14,7 @@ pub use line::{Line, LineTypes};
 pub use token_set::TokenSet;
 mod builders;
 
-use builders::{Class, Function};
+use builders::{Class, Function, assignment};
 pub use tokens::Tokens;
 pub use sink::TokenSink;
 use states::States;

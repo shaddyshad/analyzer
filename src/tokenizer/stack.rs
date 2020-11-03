@@ -26,12 +26,12 @@ impl <T> Stack<T> {
 
     // get the item on top mutably 
     pub fn top_mut(&mut self) -> Option<&mut T>{
-        self.items.front_mut()
+        self.items.back_mut()
     }
 
     // return the address of the top item 
     pub fn top(&self) -> Option<&T>{
-        self.items.front()
+        self.items.back()
     }
 
     // check if stack is empty 

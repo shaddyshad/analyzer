@@ -27,7 +27,10 @@ pub trait PyEntity: std::fmt::Debug{
     // to add a comment 
     fn add_comment(&mut self, comment: StrTendril) {}
     // to process some text 
-    fn process_text(&mut self, text: StrTendril);
+    fn process_text(&mut self, text: StrTendril) {}
+
+    // to add a block 
+    fn add_block(&mut self, block: Box<dyn PyEntity>) {}
 
     // get the type 
     fn get_type(&self) -> EntityType;

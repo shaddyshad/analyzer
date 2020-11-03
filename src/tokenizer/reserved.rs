@@ -10,7 +10,8 @@ pub enum Reserved {
     This,
     Import,
     FromImport,
-    Label(StrTendril)
+    Label(StrTendril),
+    Init
 }
 
 //check if is an answer
@@ -54,6 +55,11 @@ impl Reserved {
         // from .. import 
         if matches(t, "from"){
             return Self::FromImport;
+        }
+
+        // constructor 
+        if matches(t, "__init__"){
+            return Self::Init;
         }
 
         Self::Label(t.clone())
