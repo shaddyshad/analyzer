@@ -264,7 +264,6 @@ impl TokenSink{
                     }
                 }else{
                     // check if it is a dict assignment 
-                    println!("Tokens {:?}", rhs);
                     let tok = &rhs[0];
 
                     match tok {
